@@ -1,0 +1,10 @@
+numpy
+opencv-python-headless
+av
+loguru
+tqdm
+thop
+ninja
+tabulate
+psutil
+pycocotools

@@ -1,0 +1,13 @@
+services:
+  yolox-app:
+    platform: linux/amd64
+    build: .
+    container_name: python-yolox-app
+    volumes:
+      - ./input:/app/input
+      - ./output:/app/output
+    command: >
+      python src/myscript.py
+      -i input/myvideo.ts
+      --frames=100,200,234
+      --output_dir output
