@@ -1,218 +1,203 @@
-# Практика YOLOX
+# Лаба 3: Docker + Python + YOLOX
 
-Проект обрабатывает видео с помощью Python, PyAV и YOLOX.
+Проект запускает обработку видео через Docker.
 
-Скрипт сохраняет выбранные кадры из видео, находит на них объекты, обводит объекты прямоугольниками и окружностями, а также создаёт итоговое видео с выделенными объектами.
+Скрипт читает видео через PyAV, сохраняет выбранные кадры, находит объекты с помощью YOLOX, обводит объекты прямоугольниками и окружностями, а также сохраняет итоговое видео с окружностями вокруг объектов.
 
 ## Где что лежит
 
 Основной скрипт:
 
 ```text
-myscript.py
+src/myscript.py
 ```
 
-Входное видео лежит в корне проекта:
+Входное видео кладём сюда:
 
 ```text
-input.ts
+input/myvideo.ts
 ```
 
-Папка с результатами:
+Папка для результатов:
 
 ```text
-results/
+output/
 ```
 
-В ней лежат сохранённые кадры, обработанные изображения и итоговое видео.
-
-Исходные кадры:
+После запуска там появляются:
 
 ```text
-results/frame_100.jpg
-results/frame_200.jpg
-results/frame_234.jpg
+output/frame_100.jpg
+output/frame_200.jpg
+output/frame_234.jpg
+
+output/frame_100_rect.jpg
+output/frame_200_rect.jpg
+output/frame_234_rect.jpg
+
+output/frame_100_circle.jpg
+output/frame_200_circle.jpg
+output/frame_234_circle.jpg
+
+output/result.mp4
 ```
 
-Кадры с объектами, обведёнными прямоугольниками:
+Где:
+
+* `frame_100.jpg`, `frame_200.jpg`, `frame_234.jpg` — обычные кадры из видео;
+* `*_rect.jpg` — кадры с объектами, обведёнными прямоугольниками;
+* `*_circle.jpg` — кадры с объектами, обведёнными окружностями;
+* `result.mp4` — итоговое видео, где объекты обведены окружностями.
+
+## Что нужно установить
+
+Нужно установить только:
 
 ```text
-results/frame_100_rect.jpg
-results/frame_200_rect.jpg
-results/frame_234_rect.jpg
+Docker
+Docker Compose
 ```
 
-Кадры с объектами, обведёнными окружностями:
+Python и библиотеки руками ставить не нужно: они устанавливаются внутри Docker-образа.
 
-```text
-results/frame_100_circle.jpg
-results/frame_200_circle.jpg
-results/frame_234_circle.jpg
-```
+## Быстрый запуск
 
-Итоговое обработанное видео:
-
-```text
-results/output_circles.mp4
-```
-
-Веса модели YOLOX должны лежать здесь:
-
-```text
-weights/yolox_s.pth
-```
-
-## Как запустить проект
-
-Перейти в папку проекта:
+Склонировать репозиторий:
 
 ```bash
+git clone https://github.com/Artyomtula/practice_yolox.git
 cd practice_yolox
 ```
 
-Создать виртуальное окружение:
+Создать папки для входного видео и результатов:
 
 ```bash
-python3.11 -m venv .venv
+mkdir -p input output
 ```
 
-Активировать окружение:
-
-```bash
-source .venv/bin/activate
-```
-
-Обновить pip и setuptools:
-
-```bash
-python -m pip install --upgrade "pip<26" "setuptools<70" wheel
-```
-
-Установить PyTorch:
-
-```bash
-python -m pip install torch torchvision
-```
-
-Создать файл зависимостей без ONNX:
-
-```bash
-grep -v -E '^(onnx|onnx-simplifier)' requirements.txt > requirements-local.txt
-```
-
-Установить зависимости:
-
-```bash
-python -m pip install -r requirements-local.txt
-python -m pip install av
-```
-
-Установить YOLOX:
-
-```bash
-python -m pip install -v -e . --no-build-isolation --no-deps
-```
-
-Создать папку для весов:
-
-```bash
-mkdir -p weights
-```
-
-Скачать веса YOLOX-s:
-
-```bash
-curl -L \
-  https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_s.pth \
-  -o weights/yolox_s.pth
-```
-
-## Запуск скрипта
-
-Запуск для видео `input.ts`:
-
-```bash
-python myscript.py -i input.ts --frames=100,200,234
-```
-
-Параметр `-i` указывает путь к видеофайлу.
-
-Параметр `--frames` указывает номера кадров, которые нужно сохранить и обработать.
-
-Можно указать другие кадры:
-
-```bash
-python myscript.py -i input.ts --frames=50,100,150
-```
-
-Если видео называется иначе, например `video.mp4`, запуск будет таким:
-
-```bash
-python myscript.py -i video.mp4 --frames=100,200,234
-```
-
-## Что получится после запуска
-
-После запуска все результаты будут лежать в папке:
+Положить видео в папку `input` и назвать его:
 
 ```text
-results/
+myvideo.ts
 ```
 
-Основные файлы результата:
+То есть путь должен быть такой:
 
 ```text
-frame_100.jpg
-frame_200.jpg
-frame_234.jpg
-frame_100_rect.jpg
-frame_200_rect.jpg
-frame_234_rect.jpg
-frame_100_circle.jpg
-frame_200_circle.jpg
-frame_234_circle.jpg
-output_circles.mp4
+input/myvideo.ts
 ```
 
-## Если 234 кадр не появился
-
-Если файл `frame_234.jpg` не появился, значит в видео может быть меньше 234 кадров.
-
-Проверить количество кадров можно так:
+Собрать и запустить проект через Docker Compose:
 
 ```bash
-python - <<'PY'
-import av
-
-count = 0
-
-with av.open("input.ts") as container:
-    stream = container.streams.video[0]
-    for frame in container.decode(stream):
-        count += 1
-
-print("Всего кадров:", count)
-PY
+docker compose up --build
 ```
 
-Если кадров меньше 234, нужно использовать другое видео или указать существующие кадры:
+После завершения работы результаты будут в папке:
+
+```text
+output/
+```
+
+## Запуск через обычный Docker
+
+Сначала собрать образ:
 
 ```bash
-python myscript.py -i input.ts --frames=100,150,200
+docker build -t python-yolox-app .
 ```
 
-## Возможное предупреждение на macOS
+Потом запустить обработку:
 
-При запуске может появиться предупреждение про `AVFFrameReceiver` или `AVFAudioReceiver`.
+```bash
+docker run --rm \
+  -v ./input:/app/input \
+  -v ./output:/app/output \
+  python-yolox-app \
+  python src/myscript.py \
+  -i input/myvideo.ts \
+  --frames=100,200,234 \
+  --output_dir output
+```
 
-Если скрипт продолжает работать, кадры сохраняются и видео создаётся, это предупреждение можно игнорировать.
+## Запуск с другими кадрами
 
-## Для отчёта
+Например, если нужно сохранить и обработать кадры `120`, `130`, `140`:
 
-В отчёт можно вставить:
+```bash
+docker run --rm \
+  -v ./input:/app/input \
+  -v ./output:/app/output \
+  python-yolox-app \
+  python src/myscript.py \
+  -i input/myvideo.ts \
+  --frames=120,130,140 \
+  --output_dir output
+```
 
-1. Скриншот запуска скрипта в терминале.
-2. Исходные кадры из папки `results`.
-3. Кадры с прямоугольниками.
-4. Кадры с окружностями.
-5. Итоговое видео `results/output_circles.mp4`.
+Или через Docker Compose:
+
+```bash
+docker compose run --rm yolox-app \
+  python src/myscript.py \
+  -i input/myvideo.ts \
+  --frames=120,130,140 \
+  --output_dir output
+```
+
+## Проверка Docker
+
+Проверить, что Docker работает:
+
+```bash
+docker run hello-world
+```
+
+Проверить Docker Compose:
+
+```bash
+docker compose version
+```
+
+## Если не появился кадр 234
+
+Если файла нет:
+
+```text
+output/frame_234.jpg
+```
+
+значит в видео может быть меньше 234 кадров.
+
+Можно запустить с другими кадрами:
+
+```bash
+docker compose run --rm yolox-app \
+  python src/myscript.py \
+  -i input/myvideo.ts \
+  --frames=100,150,200 \
+  --output_dir output
+```
+
+## Что писать в отчёте
+
+В отчёт можно добавить:
+
+1. Скриншот команды `docker run hello-world`.
+2. Скриншот команды `docker compose up --build`.
+3. Скриншот папки `output`.
+4. Сохранённые кадры `frame_100.jpg`, `frame_200.jpg`, `frame_234.jpg`.
+5. Кадры с прямоугольниками.
+6. Кадры с окружностями.
+7. Итоговое видео `output/result.mp4`.
+
+## Кратко про работу программы
+
+1. Видео открывается через PyAV.
+2. Из видео сохраняются выбранные кадры.
+3. YOLOX находит объекты на кадрах.
+4. Объекты обводятся прямоугольниками.
+5. По прямоугольнику вычисляется центр объекта.
+6. По максимальной стороне прямоугольника строится окружность.
+7. Всё видео обрабатывается покадрово.
+8. Результат сохраняется в `output/result.mp4`.
